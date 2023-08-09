@@ -19,10 +19,21 @@
 					"name": "ProductTable"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "AzureSynapseAnalyticsTable1",
+						"type": "DatasetReference"
+					},
+					"name": "DimProductTable"
+				}
+			],
 			"transformations": [
 				{
 					"name": "MatchedProducts"
+				},
+				{
+					"name": "SetLoadAction"
 				}
 			],
 			"scriptLines": [
@@ -55,7 +66,39 @@
 				"     multiple: false,",
 				"     pickup: 'last',",
 				"     asc(ProductKey, true),",
-				"     broadcast: 'auto')~> MatchedProducts"
+				"     broadcast: 'auto')~> MatchedProducts",
+				"MatchedProducts alterRow(upsertIf(not(isNull(ProductKey))),",
+				"     insertIf(isNull(ProductKey))) ~> SetLoadAction",
+				"SetLoadAction sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          ProductKey as integer,",
+				"          ProductAltKey as string,",
+				"          ProductName as string,",
+				"          Color as string,",
+				"          Size as string,",
+				"          ListPrice as decimal(19,4),",
+				"          Discontinued as boolean",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:true,",
+				"     keys:['ProductAltKey'],",
+				"     format: 'table',",
+				"     staged: true,",
+				"     allowCopyCommand: true,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          ProductAltKey = ProductKey,",
+				"          ProductName = ProductsText@ProductName,",
+				"          Color = ProductsText@Color,",
+				"          Size = ProductsText@Size,",
+				"          ListPrice = ProductsText@ListPrice,",
+				"          Discontinued = ProductsText@Discontinued",
+				"     )) ~> DimProductTable"
 			]
 		}
 	}
