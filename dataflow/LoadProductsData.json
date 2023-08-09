@@ -10,10 +10,21 @@
 						"type": "DatasetReference"
 					},
 					"name": "ProductsText"
+				},
+				{
+					"dataset": {
+						"referenceName": "AzureSynapseAnalyticsTable1",
+						"type": "DatasetReference"
+					},
+					"name": "ProductTable"
 				}
 			],
 			"sinks": [],
-			"transformations": [],
+			"transformations": [
+				{
+					"name": "MatchedProducts"
+				}
+			],
 			"scriptLines": [
 				"source(output(",
 				"          ProductID as string,",
@@ -25,7 +36,26 @@
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     ignoreNoFilesFound: false) ~> ProductsText"
+				"     ignoreNoFilesFound: false) ~> ProductsText",
+				"source(output(",
+				"          ProductKey as integer,",
+				"          ProductAltKey as string,",
+				"          ProductName as string,",
+				"          Color as string,",
+				"          Size as string,",
+				"          ListPrice as decimal(19,4),",
+				"          Discontinued as boolean",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table',",
+				"     staged: true) ~> ProductTable",
+				"ProductsText, ProductTable lookup(ProductID == ProductAltKey,",
+				"     multiple: false,",
+				"     pickup: 'last',",
+				"     asc(ProductKey, true),",
+				"     broadcast: 'auto')~> MatchedProducts"
 			]
 		}
 	}
