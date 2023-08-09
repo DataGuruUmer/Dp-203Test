@@ -1,0 +1,32 @@
+{
+	"name": "LoadProductsData",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "DelimitedText1",
+						"type": "DatasetReference"
+					},
+					"name": "ProductsText"
+				}
+			],
+			"sinks": [],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          ProductID as string,",
+				"          ProductName as string,",
+				"          Color as string,",
+				"          Size as string,",
+				"          ListPrice as decimal(10,0),",
+				"          Discontinued as boolean",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> ProductsText"
+			]
+		}
+	}
+}
